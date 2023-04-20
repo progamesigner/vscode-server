@@ -22,9 +22,9 @@ jobs:
         TIMESTAMP=$(date --utc +'%Y%m%d%H%M')
 
         IMAGE_TAGS="ghcr.io/${{ github.repository }}:latest"
-        IMAGE_TAGS="${IMAGE_TAGS},ghcr.io/${{ github.repository }}:${{ env.TIMESTAMP_TAG }}"
+        IMAGE_TAGS="${IMAGE_TAGS},ghcr.io/${{ github.repository }}:${TIMESTAMP}"
         IMAGE_TAGS="${IMAGE_TAGS},ghcr.io/${{ github.repository }}:${{ matrix.variant }}"
-        IMAGE_TAGS="${IMAGE_TAGS},ghcr.io/${{ github.repository }}:${{ env.TIMESTAMP_TAG }}-${{ matrix.variant }}"
+        IMAGE_TAGS="${IMAGE_TAGS},ghcr.io/${{ github.repository }}:${TIMESTAMP}-${{ matrix.variant }}"
 
         echo IMAGE_CREATED=$(date --utc +'%Y-%m-%dT%H:%M:%SZ') >> $GITHUB_ENV
         echo IMAGE_TAGS=${IMAGE_TAGS} >> $GITHUB_ENV
