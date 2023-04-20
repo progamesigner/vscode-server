@@ -43,8 +43,6 @@ jobs:
           GO_VERSION=1.20.3
           KUBECTL_VERSION=1.27.1
           NODE_VERSION=18.16.0
-          PHP_COMPOSER_VERSION=2.5.5
-          PHP_VERSION=8.2.5
           PYTHON_VERSION=3.11.3
           RUST_VERSION=1.68.2
         labels: |
