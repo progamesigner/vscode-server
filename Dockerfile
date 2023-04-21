@@ -54,4 +54,8 @@ RUN apt-get update \
  && rm -rf /var/lib/apt/lists/* \
  && echo "export GPG_TTY=\$(tty)" >> /home/${USERNAME}/.bashrc
 
+USER ${USERNAME}
+
+WORKDIR /home/${USERNAME}
+
 ENTRYPOINT ["/usr/local/bin/code", "tunnel"]
