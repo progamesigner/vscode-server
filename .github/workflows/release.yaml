@@ -44,7 +44,7 @@ jobs:
           KUBECTL_VERSION=1.27.1
           NODE_VERSION=18.16.0
           PYTHON_VERSION=3.11.3
-          RUST_VERSION=1.68.2
+          RUST_VERSION=1.69.0
         labels: |
           org.opencontainers.image.authors=Yang Sheng Han <progamesigner@gmail.com>
           org.opencontainers.image.created=${{ env.IMAGE_CREATED }}
