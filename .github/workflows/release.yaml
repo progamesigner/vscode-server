@@ -19,7 +19,7 @@ jobs:
           variant: jammy
     steps:
     - run: |
-        TIMESTAMP=$(date --utc +'%Y%m%d%H%M')
+        TIMESTAMP=$(date --utc +'%Y%m%d')
 
         IMAGE_TAGS="ghcr.io/${{ github.repository }}:latest"
         IMAGE_TAGS="${IMAGE_TAGS},ghcr.io/${{ github.repository }}:${TIMESTAMP}"
