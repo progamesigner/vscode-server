@@ -58,4 +58,4 @@ USER ${USERNAME}
 
 WORKDIR /home/${USERNAME}
 
-ENTRYPOINT ["/usr/local/bin/code", "tunnel"]
+ENTRYPOINT ["/usr/local/bin/code", "tunnel", "--no-sleep"]
