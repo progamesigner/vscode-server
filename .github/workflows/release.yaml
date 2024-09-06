@@ -17,9 +17,9 @@ jobs:
       matrix:
         distro:
         - ubuntu
-        include:
-        - distro: ubuntu
-          variant: jammy
+        variant:
+        - jammy
+        - noble
     steps:
     - run: |
         TIMESTAMP=$(date --utc +'%Y%m%d')
@@ -31,6 +31,7 @@ jobs:
 
         echo IMAGE_CREATED=$(date --utc +'%Y-%m-%dT%H:%M:%SZ') >> $GITHUB_ENV
         echo IMAGE_TAGS=${IMAGE_TAGS} >> $GITHUB_ENV
+    - uses: docker/setup-qemu-action@v3
     - uses: docker/setup-buildx-action@v3
     - uses: docker/login-action@v3
       with:
@@ -59,5 +60,6 @@ jobs:
           org.opencontainers.image.url=https://github.com/${{ github.repository }}
           org.opencontainers.image.vendor=https://github.com/${{ github.repository }}
           org.opencontainers.image.version=${{ github.sha }}
+        platforms: linux/amd64,linux/arm64
         push: true
         tags: ${{ env.IMAGE_TAGS }}
