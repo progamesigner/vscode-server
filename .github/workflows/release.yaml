@@ -11,26 +11,29 @@ on:
   workflow_dispatch:
 
 jobs:
-  release:
+  build:
     runs-on: ubuntu-latest
     strategy:
       matrix:
-        distro:
-        - ubuntu
+        platform:
+        - linux/amd64
+        - linux/arm64
         variant:
+        - focal
         - jammy
         - noble
     steps:
     - run: |
-        TIMESTAMP=$(date --utc +'%Y%m%d')
+        PLATFORM=${{ matrix.platform }}
 
-        IMAGE_TAGS="ghcr.io/${{ github.repository }}:latest"
-        IMAGE_TAGS="${IMAGE_TAGS},ghcr.io/${{ github.repository }}:${TIMESTAMP}"
-        IMAGE_TAGS="${IMAGE_TAGS},ghcr.io/${{ github.repository }}:${{ matrix.variant }}"
-        IMAGE_TAGS="${IMAGE_TAGS},ghcr.io/${{ github.repository }}:${TIMESTAMP}-${{ matrix.variant }}"
+        case ${PLATFORM} in
+        linux/amd64) VSCODE_OS=cli-alpine-x64;;
+        linux/arm64) VSCODE_OS=cli-alpine-arm64;;
+        *) echo "unsupported platform"; exit 1 ;;
+        esac
 
-        echo IMAGE_CREATED=$(date --utc +'%Y-%m-%dT%H:%M:%SZ') >> $GITHUB_ENV
-        echo IMAGE_TAGS=${IMAGE_TAGS} >> $GITHUB_ENV
+        echo ARTIFACT_NAME=image-digest-${{ matrix.variant }}-${PLATFORM//\//-} >> $GITHUB_ENV
+        echo VSCODE_URL="https://code.visualstudio.com/sha/download?build=stable&os=${VSCODE_OS}" >> $GITHUB_ENV
     - uses: docker/setup-qemu-action@v3
     - uses: docker/setup-buildx-action@v3
     - uses: docker/login-action@v3
@@ -38,28 +41,88 @@ jobs:
         registry: ghcr.io
         username: ${{ github.actor }}
         password: ${{ secrets.GITHUB_TOKEN }}
-    - uses: docker/build-push-action@v6
+    - uses: docker/metadata-action@v5
+      id: metadata
+      with:
+        images: ghcr.io/${{ github.repository }}
+        labels: |
+          org.opencontainers.image.authors=Yang Sheng Han
+          org.opencontainers.image.documentation=https://github.com/${{ github.repository }}
+          org.opencontainers.image.title=vscode-server-ubuntu-${{ matrix.variant }}
+          org.opencontainers.image.vendor=https://github.com/${{ github.repository }}
+          org.opencontainers.image.version=${{ github.sha }}
+        tags: |
+          type=raw,value=latest,enable=${{ matrix.variant == 'noble' }}
+          type=raw,value=${{ matrix.variant }}
+          type=schedule,pattern={{date 'YYYYMMDD'}},enable=${{ matrix.variant == 'noble' }}
+          type=schedule,pattern={{date 'YYYYMMDD'}},suffix=${{ matrix.variant }}
+    - id: build
+      uses: docker/build-push-action@v6
       with:
         build-args: |
-          DISTRO=${{ matrix.distro }}
+          DISTRO=ubuntu
           VARIANT=${{ matrix.variant }}
+          VSCODE_URL=${{ env.VSCODE_URL }}
           DOCKER_VERSION=23.0.3
           GO_VERSION=1.20.3
           KUBECTL_VERSION=1.27.1
           NODE_VERSION=18.16.0
           PYTHON_VERSION=3.11.3
           RUST_VERSION=1.69.0
+        labels: ${{ env.DOCKER_METADATA_OUTPUT_LABELS }}
+        outputs: type=image,name=ghcr.io/${{ github.repository }},name-canonical=true,push=true,push-by-digest=true
+        platforms: ${{ matrix.platform }}
+    - run: |
+        mkdir -p /tmp/image-digests
+        touch /tmp/image-digests/${IMAGE_DIGEST#sha256:}
+      env:
+        IMAGE_DIGEST: ${{ steps.build.outputs.digest }}
+    - uses: actions/upload-artifact@v4
+      with:
+        compression-level: 0
+        if-no-files-found: error
+        name: ${{ env.ARTIFACT_NAME }}
+        path: /tmp/image-digests/*
+        retention-days: 1
+
+  release:
+    runs-on: ubuntu-latest
+    needs:
+    - build
+    strategy:
+      matrix:
+        variant:
+        - focal
+        - jammy
+        - noble
+    steps:
+    - uses: docker/setup-buildx-action@v3
+    - uses: docker/login-action@v3
+      with:
+        registry: ghcr.io
+        username: ${{ github.actor }}
+        password: ${{ secrets.GITHUB_TOKEN }}
+    - uses: docker/metadata-action@v5
+      with:
+        images: ghcr.io/${{ github.repository }}
         labels: |
-          org.opencontainers.image.authors=Yang Sheng Han <progamesigner@gmail.com>
-          org.opencontainers.image.created=${{ env.IMAGE_CREATED }}
-          org.opencontainers.image.description=Microsoft Visual Studio Code Server for Remote Tunnel
+          org.opencontainers.image.authors=Yang Sheng Han
           org.opencontainers.image.documentation=https://github.com/${{ github.repository }}
-          org.opencontainers.image.revision=${{ github.sha }}
-          org.opencontainers.image.source=https://github.com/${{ github.repository }}
-          org.opencontainers.image.title=vscode-server-${{ matrix.distro }}-${{ matrix.variant }}
-          org.opencontainers.image.url=https://github.com/${{ github.repository }}
+          org.opencontainers.image.title=vscode-server-ubuntu-${{ matrix.variant }}
           org.opencontainers.image.vendor=https://github.com/${{ github.repository }}
           org.opencontainers.image.version=${{ github.sha }}
-        platforms: linux/amd64,linux/arm64
-        push: true
-        tags: ${{ env.IMAGE_TAGS }}
+        tags: |
+          type=raw,value=latest,enable=${{ matrix.variant == 'noble' }}
+          type=raw,value=${{ matrix.variant }}
+          type=schedule,pattern={{date 'YYYYMMDD'}},enable=${{ matrix.variant == 'noble' }}
+          type=schedule,pattern={{date 'YYYYMMDD'}},suffix=${{ matrix.variant }}
+    - uses: actions/download-artifact@v4
+      with:
+        merge-multiple: true
+        path: /tmp/image-digests
+        pattern: image-digest-${{ matrix.variant}}-*
+    - run: |
+        docker buildx imagetools create \
+          $(jq --compact-output --raw-output '.tags | map("--tag " + .) | join(" ")' <<< "$DOCKER_METADATA_OUTPUT_JSON") \
+          $(printf 'ghcr.io/${{ github.repository }}@sha256:%s ' *)
+      working-directory: /tmp/image-digests
