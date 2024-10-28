@@ -63,12 +63,13 @@ jobs:
           DISTRO=ubuntu
           VARIANT=${{ matrix.variant }}
           VSCODE_URL=${{ env.VSCODE_URL }}
-          DOCKER_VERSION=23.0.3
-          GO_VERSION=1.20.3
-          KUBECTL_VERSION=1.27.1
-          NODE_VERSION=18.16.0
-          PYTHON_VERSION=3.11.3
-          RUST_VERSION=1.69.0
+
+          DOCKER_VERSION=27.3.1
+          GO_VERSION=1.23.2
+          KUBECTL_VERSION=1.31.0
+          NODE_VERSION=20.18.0
+          PYTHON_VERSION=3.13.0
+          RUST_VERSION=1.82.0
         labels: ${{ env.DOCKER_METADATA_OUTPUT_LABELS }}
         outputs: type=image,name=ghcr.io/${{ github.repository }},name-canonical=true,push=true,push-by-digest=true
         platforms: ${{ matrix.platform }}
