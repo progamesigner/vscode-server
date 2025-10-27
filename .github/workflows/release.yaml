@@ -78,7 +78,7 @@ jobs:
         touch /tmp/image-digests/${IMAGE_DIGEST#sha256:}
       env:
         IMAGE_DIGEST: ${{ steps.build.outputs.digest }}
-    - uses: actions/upload-artifact@v4
+    - uses: actions/upload-artifact@v5
       with:
         compression-level: 0
         if-no-files-found: error
