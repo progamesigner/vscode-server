@@ -36,7 +36,7 @@ jobs:
         echo VSCODE_URL="https://code.visualstudio.com/sha/download?build=stable&os=${VSCODE_OS}" >> $GITHUB_ENV
     - uses: docker/setup-qemu-action@v3
     - uses: docker/setup-buildx-action@v3
-    - uses: docker/login-action@v3
+    - uses: docker/login-action@v4
       with:
         registry: ghcr.io
         username: ${{ github.actor }}
@@ -98,7 +98,7 @@ jobs:
         - noble
     steps:
     - uses: docker/setup-buildx-action@v3
-    - uses: docker/login-action@v3
+    - uses: docker/login-action@v4
       with:
         registry: ghcr.io
         username: ${{ github.actor }}
