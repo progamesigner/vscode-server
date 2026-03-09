@@ -34,7 +34,7 @@ jobs:
 
         echo ARTIFACT_NAME=image-digest-${{ matrix.variant }}-${PLATFORM//\//-} >> $GITHUB_ENV
         echo VSCODE_URL="https://code.visualstudio.com/sha/download?build=stable&os=${VSCODE_OS}" >> $GITHUB_ENV
-    - uses: docker/setup-qemu-action@v3
+    - uses: docker/setup-qemu-action@v4
     - uses: docker/setup-buildx-action@v3
     - uses: docker/login-action@v3
       with:
