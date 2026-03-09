@@ -57,7 +57,7 @@ jobs:
           type=schedule,pattern={{date 'YYYYMMDD'}},enable=${{ matrix.variant == 'noble' }}
           type=schedule,pattern={{date 'YYYYMMDD'}},suffix=${{ matrix.variant }}
     - id: build
-      uses: docker/build-push-action@v6
+      uses: docker/build-push-action@v7
       with:
         build-args: |
           DISTRO=ubuntu
